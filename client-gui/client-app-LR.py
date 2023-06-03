@@ -22,6 +22,8 @@ import pandas, numpy
 from pandas import DataFrame, read_csv
 from numpy import save
 
+from datetime import datetime
+
 from concrete.ml.deployment import FHEModelClient
 
 class ClientGUI:
@@ -50,8 +52,10 @@ class ClientGUI:
         set_default_color_theme("green")
 
         # Custom CTk appearance
-        self.root.configure(padx=20, pady=20)
-        self.root.geometry("800x550")
+        self.root.configure(padx=20, pady=20, 
+                            fg_color='#3d4539',
+                            )
+        self.root.geometry("900x950")
         self.root.resizable(True, True)
         self.root.title("FHE-based Brain Tumor Classifier (Client)")
 
@@ -59,14 +63,36 @@ class ClientGUI:
         self.title = CTkLabel(self.root)
         self.title.configure(
             text='FHE-based Brain Tumor Classifier (Client)', 
-            fg_color='#b4ff99',
-            font=CTkFont(family='Arial', size=25, weight='bold'),
+            fg_color='#aee895',
+            font=CTkFont(size=30, weight='bold'),
             text_color='#1d2b17',
-            justify ='center'
+            justify ='center',
             )
-        self.title.pack(fill='x')
+        self.title.pack(fill='x', pady = 10,)
 
-        # Description of the App
+        ### Description of the App
+        self.description_frame = CTkFrame(self.root)
+        self.about_label = CTkLabel(self.description_frame)
+        self.about_label.configure(
+            font=CTkFont(size=20, weight='bold'),
+            text='About the Tool',
+            text_color='#1d2b17',
+            )
+        self.about_label.pack(
+                            # expand=False, fill="both", 
+                            pady=10, side="top"
+                              )
+        self.description_label = CTkLabel(self.description_frame)
+        self.description_label.configure(
+            justify='center',
+            text='This tool implements FHE-based logistic regression model for tumor classification using gene expression data.',
+            font=CTkFont(size=16),
+            text_color='#1d2b17',
+            fg_color='white',
+            )
+        self.description_label.pack(expand=False, fill="x", side="top")
+        self.description_frame.pack(
+            fill="both", ipady=10, padx=20, pady=20, side="top")
 
         ### Data Preprocessing: Feature Selection and Encryption
 
@@ -79,15 +105,17 @@ class ClientGUI:
 
         self.preprocessing_label = CTkLabel(self.preprocessing_frame)
         self.preprocessing_label.configure(
-            text='Upload your .csv file for feature selection and encryption:',
-            justify='center',
+            text='Upload your .csv file for feature selection, encryption, and prediction here:',
+            justify='left',
+            text_color='#1d2b17',
+            font=CTkFont(size=16),
             )
         self.preprocessing_label.grid(row=0, column=0, padx=10, pady=10, sticky="nw")
 
         self.preprocessing_filename = CTkEntry(self.preprocessing_frame, textvariable=self.preprocessing_var)
         self.preprocessing_filename.configure(
-            justify='center',
-            width=500,
+            justify='left',
+            width=640,
             exportselection=False,
             state="disabled",
             takefocus=False,
@@ -101,6 +129,8 @@ class ClientGUI:
         self.preprocessing_browse.configure(
             hover_color='#2c780b', 
             text='Browse File', 
+            # width=300,
+            font=CTkFont(size=15),
             command=self.browseRawFile
         )
         self.preprocessing_browse.grid(row=1, column=2, padx=10)
@@ -110,6 +140,7 @@ class ClientGUI:
             hover_color="#2c780b",
             text='Submit Data for FHE Classification',
             width=300,
+            font=CTkFont(size=15),
             command = self.processInput
             )
         self.preprocessing_begin.grid(row=2, column=0, columnspan=3, pady=10)
@@ -120,12 +151,20 @@ class ClientGUI:
         output_tracker_frame = CTkFrame(self.root)
 
         self.output_tracker_label = CTkLabel(output_tracker_frame)
-        self.output_tracker_label.configure(text='Output Window')
-        self.output_tracker_label.pack(side="top")
+        self.output_tracker_label.configure(
+            text='Output Window',
+            text_color='#1d2b17',
+            font=CTkFont(size=20, weight='bold'),
+            justify='center',
+            )
+        self.output_tracker_label.pack(pady=10, side="top")
         self.output_tracker = CTkTextbox(output_tracker_frame)
         self.output_tracker.configure(height=75, state="disabled")
         _text_ = 'Track the status of your data here.'
-        self.output_tracker.configure(state="normal")
+        self.output_tracker.configure(state="normal",
+                                      text_color='#1d2b17',
+                                      font=CTkFont(size=18),
+                                      )
         self.output_tracker.insert("0.0", _text_)
         self.output_tracker.configure(state="disabled")
         self.output_tracker.pack(expand=True, fill="both", padx=10, pady=10)
@@ -262,7 +301,7 @@ class ClientGUI:
                 if f.split("/")[-1] in ["encrypted_input.txt", "serialized_evaluation_keys.ekl"]:
                     os.remove(f)
 
-            self.writeOutput("Generating Keys...")
+            self.writeOutput("Generating keys...")
 
             self.generateKeys()
 
@@ -281,7 +320,8 @@ class ClientGUI:
             for row in range(0, arr_no_id.shape[0]):
                 clear_input = arr_no_id[[row],:]
                 encrypted_input = self.fhe_model_client.quantize_encrypt_serialize(clear_input)
-                self.writeOutput(f"New row encrypted of {type(encrypted_input)}; adding to list of encrypted values...")
+                # self.writeOutput(f"New row encrypted of {type(encrypted_input)}; adding to list of encrypted values...")
+                self.writeOutput("Encrypting pre-processed data...")
                 encrypted_rows.append(encrypted_input)
             
             self.encrypted_rows = encrypted_rows
@@ -347,16 +387,23 @@ class ClientGUI:
             decrypted_pred = [dictionary for dictionary in self.data_dictionary.values()] 
             print(decrypted_pred)
 
-            self.writeOutput(decrypted_pred)
+            final_str = "The classification of your sample is: " + final_output[0].upper()
+            self.writeOutput(final_str)
 
-            self.saveDecryptedPrediction(decrypted_pred)
+            self.savePrediction(decrypted_pred)
         
         except Exception as e:
             self.writeOutput(f"Error: {str(e)}")
     
-    def saveDecryptedPrediction(self, dictionary):
+    def savePrediction(self, dictionary):
         final_pred = pandas.DataFrame.from_dict(dictionary)
-        final_pred.to_csv((os.path.join(os.path.dirname(__file__), "predictions/final_prediction_output.csv")), 
+        
+        now = datetime.now()
+        date = now.strftime("%Y_%d_%m")
+
+        fname = "predictions/" + date + "_final_prediction_output.csv"
+
+        final_pred.to_csv((os.path.join(os.path.dirname(__file__), fname)), 
                            index=False, header=True)
 
         self.writeOutput("Your final prediction output has been saved! Check the predictions folder to view it.")
