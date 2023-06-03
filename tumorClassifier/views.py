@@ -10,10 +10,13 @@ from pandas import read_csv
 
 from concrete.ml.deployment import FHEModelServer
 
-def home(request):
+def index(request):
     return render(request, 'index.html', 
                   context = {'classes_list':{0: 'ependymoma', 1: 'glioblastoma', 2: 'medulloblastoma', 3: 'normal', 4: 'pilocytic_astrocytoma'}}
                   )
+
+def about(request):
+    return render(request,'about.html')
 
 def start_classification(request):
 

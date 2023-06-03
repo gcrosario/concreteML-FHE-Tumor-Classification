@@ -53,12 +53,12 @@ class ClientGUI:
         self.root.configure(padx=20, pady=20)
         self.root.geometry("800x550")
         self.root.resizable(True, True)
-        self.root.title("FHE-based Brain Tumor Classifier")
+        self.root.title("FHE-based Brain Tumor Classifier (Client)")
 
         # Top Label
         self.title = CTkLabel(self.root)
         self.title.configure(
-            text='FHE-based Brain Tumor Classifier', 
+            text='FHE-based Brain Tumor Classifier (Client)', 
             fg_color='#b4ff99',
             font=CTkFont(family='Arial', size=25, weight='bold'),
             text_color='#1d2b17',
@@ -70,7 +70,13 @@ class ClientGUI:
 
         ### Data Preprocessing: Feature Selection and Encryption
 
+        # Variables for filenames
+        self.preprocessing_var = StringVar()
+        self.decryption_var = StringVar()
+
+        # Preprocessing Frame
         self.preprocessing_frame = CTkFrame(self.root)
+
         self.preprocessing_label = CTkLabel(self.preprocessing_frame)
         self.preprocessing_label.configure(
             text='Upload your .csv file for feature selection and encryption:',
@@ -78,11 +84,8 @@ class ClientGUI:
             )
         self.preprocessing_label.grid(row=0, column=0, padx=10, pady=10, sticky="nw")
 
-        self.preprocessing_var = StringVar()
         self.preprocessing_filename = CTkEntry(self.preprocessing_frame, textvariable=self.preprocessing_var)
         self.preprocessing_filename.configure(
-            placeholder_text = 'input filepath or browse...',
-            placeholder_text_color = 'grey',
             justify='center',
             width=500,
             exportselection=False,
@@ -105,100 +108,29 @@ class ClientGUI:
         self.preprocessing_begin = CTkButton(self.preprocessing_frame)
         self.preprocessing_begin.configure(
             hover_color="#2c780b",
-            text='Preprocess Data',
+            text='Submit Data for FHE Classification',
             width=300,
-            command = self.preprocessInput
+            command = self.processInput
             )
         self.preprocessing_begin.grid(row=2, column=0, columnspan=3, pady=10)
 
-        preprocessing_output_frame = CTkFrame(self.root)
-        self.preprocessing_output_label = CTkLabel(preprocessing_output_frame)
-        self.preprocessing_output_label.configure(text='Output Window')
-        self.preprocessing_output_label.pack(side="top")
-        self.preprocessing_output = CTkTextbox(preprocessing_output_frame)
-        self.preprocessing_output.configure(height=75, state="disabled")
+        self.preprocessing_frame.pack( anchor="w", fill="x", padx=20, pady=10, side="top")
+        
+        # Output Status Frame
+        output_tracker_frame = CTkFrame(self.root)
+
+        self.output_tracker_label = CTkLabel(output_tracker_frame)
+        self.output_tracker_label.configure(text='Output Window')
+        self.output_tracker_label.pack(side="top")
+        self.output_tracker = CTkTextbox(output_tracker_frame)
+        self.output_tracker.configure(height=75, state="disabled")
         _text_ = 'Track the status of your data here.'
-        self.preprocessing_output.configure(state="normal")
-        self.preprocessing_output.insert("0.0", _text_)
-        self.preprocessing_output.configure(state="disabled")
-        self.preprocessing_output.pack(expand=True, fill="both", padx=10, pady=10)
-        preprocessing_output_frame.pack(expand=True, fill="both", padx=20, pady=10, side="top")
+        self.output_tracker.configure(state="normal")
+        self.output_tracker.insert("0.0", _text_)
+        self.output_tracker.configure(state="disabled")
+        self.output_tracker.pack(expand=True, fill="both", padx=10, pady=10)
 
-        # self.preprocessing_output_fs = CTkTextbox(self.preprocessing_frame)
-        # self.preprocessing_output_fs.configure(height=25, state="disabled", width=600)
-        # _text_ = 'The first 100 bits of your encryption output will be displayed here.'
-        # self.preprocessing_output_fs.insert("0.0", _text_)
-        # self.encryption_output.configure(
-        #     state="disabled",
-        #     )
-        # self.preprocessing_output_fs.grid(row=3, column=0, columnspan=3, pady=10, sticky="s")
-
-        # self.preprocessing_output_enc = CTkTextbox(self.preprocessing_frame)
-        # self.preprocessing_output_enc.configure(height=25, state="disabled", width=600)
-        # _text_ = 'The first 100 bits of your encryption output will be displayed here.'
-        # self.preprocessing_output_fs.insert("0.0", _text_)
-        # self.encryption_output.configure(
-        #     state="disabled",
-        #     )
-        # self.preprocessing_output_enc.grid(row=4, column=0, columnspan=3, pady=10, sticky="s")
-
-        self.preprocessing_frame.pack(
-            anchor="w",
-            fill="x",
-            padx=20,
-            pady=10,
-            side="top"
-            )
-        
-        ### Decryption
-        self.decryption_frame = CTkFrame(self.root)
-        self.decryption_label = CTkLabel(self.decryption_frame)
-        self.decryption_label.configure(
-            text='Upload your FHE prediction output file for decryption:',
-            justify='center',
-            )
-        self.decryption_label.grid(row=0, column=0, padx=10, pady=10, sticky="nw")
-
-        self.decryption_var = StringVar()
-        self.decryption_filename = CTkEntry(self.decryption_frame, textvariable=self.decryption_var)
-        self.decryption_filename.configure(
-            placeholder_text = 'input filepath or browse...',
-            placeholder_text_color = 'grey',
-            justify='center',
-            width=500,
-            exportselection=False,
-            state="disabled",
-            takefocus=False,
-            )
-        self.decryption_filename.grid(row=1, column=0, padx=10)
-
-        self.decryption_browse = CTkButton(
-            self.decryption_frame, 
-            hover=True, 
-            )
-        self.decryption_browse.configure(
-            hover_color='#2c780b', 
-            text='Browse File', 
-            command=self.browsePrediction
-        )
-        self.decryption_browse.grid(row=1, column=2, padx=10)
-        
-        self.decryption_begin = CTkButton(self.decryption_frame)
-        self.decryption_begin.configure(
-            hover_color="#2c780b",
-            text='Decrypt Prediction',
-            width=300,
-            command = self.decryptPrediction
-            )
-        self.decryption_begin.grid(column=0, columnspan=3, pady=10, row=2)
-
-        self.decryption_frame.pack(
-            anchor="w",
-            fill="x",
-            padx=20,
-            pady=10,
-            side="top"
-            )
+        output_tracker_frame.pack(expand=True, fill="both", padx=20, pady=10, side="top")
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
@@ -214,19 +146,20 @@ class ClientGUI:
 
     def writeOutput(self, string, delete_switch = False):
         """Function for writing argument 'string' to the app's output window. Set argument 'delete_switch' to True to clear the window before printing."""
-        self.preprocessing_output.configure(state="normal")
+        self.output_tracker.configure(state="normal")
         if(delete_switch):
-            self.preprocessing_output.delete("1.0", END) #tk.END
-            self.preprocessing_output.insert("0.0", f"{string}\n\n")
+            self.output_tracker.delete("1.0", END) #tk.END
+            self.output_tracker.insert("0.0", f"{string}\n\n")
         else:
-            self.preprocessing_output.insert(INSERT, f"{string}\n\n")
-        self.preprocessing_output.see(END)
-        self.preprocessing_output.configure(state="disabled")
+            self.output_tracker.insert(INSERT, f"{string}\n\n")
+        self.output_tracker.see(END)
+        self.output_tracker.configure(state="disabled")
     
     ### Preprocessing with feature selection and encryption combined
-    def preprocessInput(self):
+    def processInput(self):
         self.dropColumns()
         self.encryptInput()
+        self.decryptPrediction()
 
     ## Feature Selection
     def browseRawFile(self):
@@ -234,11 +167,9 @@ class ClientGUI:
                                           title = "Select a File",
                                         #   filetypes = (("all files","*.*"))
                                           )
-        # self.feat_selection_var.set(filename)
         self.preprocessing_var.set(filename)
     
     def dropColumns(self, feature_names = "./client-gui/kbest-top-features.txt"):
-        # filename = self.feat_selection_var.get()
         filename = self.preprocessing_var.get()
 
         if(not filename.endswith(".csv")):
@@ -256,13 +187,7 @@ class ClientGUI:
             drop_df.to_csv("./client-gui/feature_selection_output.csv", index=False, header=True)
         
         self.writeOutput("Feature Selection DONE!")
-
-        # self.preprocessing_output_fs.configure(state="normal")
-        # self.preprocessing_output_fs.delete("1.0", END)
-        # self.preprocessing_output_fs.insert("0.0", text="Feature Selection DONE!")
-        # self.preprocessing_output_fs.configure(state="disabled")
         
-    
     def generateKeys(self):
         model_dir = os.path.dirname(__file__)
         key_dir = os.path.join(os.path.dirname(__file__), "keys")
@@ -284,15 +209,12 @@ class ClientGUI:
         with open(os.path.join(os.path.dirname(__file__), filename), "wb") as enc_file:
             for line in self.encrypted_rows:
                 enc_file.write(line)
-                # enc_file.write(b"\n\n\n\n\n")
         
         with open(os.path.join(os.path.dirname(__file__), r'serialized_evaluation_keys.ekl'), "wb") as f:
             f.write(self.serialized_evaluation_keys)
 
     def sendEncryptRequestToServer(self, client):
         """Sends 'encrypted_input.txt' and 'serialized_evaluation_keys.ekl' (expected to be located in the same directory as the app) to the server-side app through the Python requests library. URL is currently set to localhost:8000 for development purposes."""
-        
-        self.writeOutput("Sending encrypted input and keys to server for classification...")
         
         app_url = "http://localhost:8000"
 
@@ -313,19 +235,25 @@ class ClientGUI:
                         (os.path.join(os.path.dirname(__file__), "encrypted_input.txt")),
                         "rb"
                         )
-        
         request_data = dict(csrfmiddlewaretoken=csrftoken)
         request_files = dict(inputs=inputs_file, keys_file=eval_keys_file)
+        
+        self.writeOutput("Sending encrypted data and evaluation keys to server...")
+
+        self.writeOutput("Waiting for server's response...")
         
         #code to send the above files to "localhost:8000/{function_name}"
         request_output = client.post(f"{app_url}/start_classification", data = request_data, files=request_files, headers=dict(Referer=app_url))
 
-        if("test.zip" in os.listdir(os.path.dirname(__file__))): os.remove(os.path.join(os.path.dirname(__file__), "test.zip"))
+        if request_output.ok:
+            self.writeOutput(f"Response Code: {request_output.status_code}. FHE Classification DONE!")
 
-        with open(os.path.join(os.path.dirname(__file__), "predictions/enc_predictions.zip"), "wb") as z:
-            z.write(request_output.content)
+            if("test.zip" in os.listdir(os.path.dirname(__file__))): os.remove(os.path.join(os.path.dirname(__file__), "test.zip"), timeout=(10, 10))
 
-        self.writeOutput("Sending completed!")
+            with open(os.path.join(os.path.dirname(__file__), "predictions/enc_predictions.zip"), "wb") as z:
+                z.write(request_output.content)
+
+        return os.path.join(os.path.dirname(__file__), "predictions/enc_predictions.zip")
 
     def encryptInput(self):
         try: 
@@ -351,9 +279,7 @@ class ClientGUI:
                 self.data_dictionary[count] = {'id':id, 'result':''} 
 
             for row in range(0, arr_no_id.shape[0]):
-                #clear_input = arr[:,1:]
                 clear_input = arr_no_id[[row],:]
-                #print(clear_input)
                 encrypted_input = self.fhe_model_client.quantize_encrypt_serialize(clear_input)
                 self.writeOutput(f"New row encrypted of {type(encrypted_input)}; adding to list of encrypted values...")
                 encrypted_rows.append(encrypted_input)
@@ -363,7 +289,7 @@ class ClientGUI:
             for row in encrypted_rows:
                 print("Row: ", row[:10])
 
-            self.writeOutput(f"Encryption complete! The first 15 character of your encrypted output:\n{encrypted_rows[0][0:16]}")
+            self.writeOutput("Data Encryption DONE!")
 
             self.saveEncryption()
 
@@ -375,28 +301,20 @@ class ClientGUI:
 
             client.get(app_url)
 
-            self.sendEncryptRequestToServer(client=client)
+            pred_zip_name = self.sendEncryptRequestToServer(client=client)
 
-            # self.preprocessing_output_enc.configure(state="normal")
-            # # self.preprocessing_output.delete("1.0", END) #tk.END
-            # # self.preprocessing_output.insert("0.0", f"Your encrypted output:\n{encrypted_rows[0][0:16]}")
-            # self.preprocessing_output_enc.insert(END, text="Encryption DONE!")
-            # self.preprocessing_output_enc.configure(state="disabled")
+            # print("pred_zip_name: ", pred_zip_name)
+
+            self.decryption_var.set(pred_zip_name)
 
         except Exception as e:
             self.writeOutput(f"Error: {traceback.format_exc()}")
     
     ### Decryption
-    def browsePrediction(self):
-        filename = filedialog.askopenfilename(initialdir = "./",
-                                          title = "Select a File",
-                                        #   filetypes = (("all files","*.*"))
-                                          )
-        self.decryption_var.set(filename)
-    
     def decryptPrediction(self):
         try: 
             filename = self.decryption_var.get()
+            # print("filename: ",filename)
 
             if not filename.endswith(".zip"):
                 raise Exception("Invalid file type: Only .zip files are supported.")
@@ -405,7 +323,7 @@ class ClientGUI:
             classes_dict = {0: 'ependymoma', 1: 'glioblastoma', 2: 'medulloblastoma', 3: 'normal', 4: 'pilocytic_astrocytoma'}
             pred_folder = os.path.join(os.path.dirname(__file__), "predictions")
 
-            zip_name = filename #os.path.join(pred_folder, "enc_predictions.zip") if os.listdir(pred_folder) else os.path.join(os.path.dirname(__file__), "enc_predictions.zip")
+            zip_name = filename
 
             with zipfile.ZipFile(zip_name, "r") as zObject:
                 zObject.extractall(path=pred_folder)
@@ -426,14 +344,27 @@ class ClientGUI:
             for i in range(len(final_output)):
                 self.data_dictionary[i]['result'] = final_output[i]
             
-            self.writeOutput([dictionary for dictionary in self.data_dictionary.values()])
+            decrypted_pred = [dictionary for dictionary in self.data_dictionary.values()] 
+            print(decrypted_pred)
+
+            self.writeOutput(decrypted_pred)
+
+            self.saveDecryptedPrediction(decrypted_pred)
         
         except Exception as e:
             self.writeOutput(f"Error: {str(e)}")
+    
+    def saveDecryptedPrediction(self, dictionary):
+        final_pred = pandas.DataFrame.from_dict(dictionary)
+        final_pred.to_csv((os.path.join(os.path.dirname(__file__), "predictions/final_prediction_output.csv")), 
+                           index=False, header=True)
+
+        self.writeOutput("Your final prediction output has been saved! Check the predictions folder to view it.")
 
 def getClientFiles():
     files = [
         r"https://github.com/gcrosario/concreteML-FHE-Tumor-Classification/raw/master/FHE-Compiled-Model/LR-Kbest20-Trial3/client.zip",
+        r"https://raw.githubusercontent.com/gcrosario/concreteML-FHE-Tumor-Classification/master/client-gui/kbest-top-features.txt",
         ]
     for file in files:
         print(file.split("/")[-1].replace("%20", " "))
