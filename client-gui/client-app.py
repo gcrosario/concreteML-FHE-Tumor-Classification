@@ -411,7 +411,7 @@ class ClientGUI:
 def getClientFiles():
     files = [
         r"https://github.com/gcrosario/concreteML-FHE-Tumor-Classification/raw/master/FHE-Compiled-Model/LR-Kbest20-Trial3/client.zip",
-        r"https://raw.githubusercontent.com/gcrosario/concreteML-FHE-Tumor-Classification/master/client-gui/kbest-top-features.txt",
+        r"https://raw.githubusercontent.com/gcrosario/concreteML-FHE-Tumor-Classification/master/FHE-Compiled-Model/kbest-top-features.txt",
         ]
     for file in files:
         print(file.split("/")[-1].replace("%20", " "))
