@@ -32,7 +32,7 @@ def start_classification(request):
 
     # print([type(d) for d in data])
 
-    #print(data)
+    # print(data)
     #print(keys_file.read())
 
     #print(data)

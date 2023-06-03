@@ -305,8 +305,15 @@ class ClientGUI:
 
         #self.writeOutput(f"{type(self.encrypted_rows)}")
 
-        eval_keys_file = os.path.join(os.path.dirname(__file__), "serialized_evaluation_keys.ekl")
-        inputs_file = os.path.join(os.path.dirname(__file__), "encrypted_input.txt")
+        eval_keys_file = open(
+                            (os.path.join(os.path.dirname(__file__), "serialized_evaluation_keys.ekl")),
+                            "rb"
+                            )
+        inputs_file = open(
+                        (os.path.join(os.path.dirname(__file__), "encrypted_input.txt")),
+                        "rb"
+                        )
+        
         request_data = dict(csrfmiddlewaretoken=csrftoken)
         request_files = dict(inputs=inputs_file, keys_file=eval_keys_file)
         
