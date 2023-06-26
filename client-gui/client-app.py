@@ -194,6 +194,17 @@ class ClientGUI:
         self.output_tracker.see(END)
         self.output_tracker.configure(state="disabled")
     
+    ## Get Size
+    def get_size(self, file_path, unit='bytes'):
+        file_size = os.path.getsize(file_path)
+        exponents_map = {'bytes': 0, 'kb': 1, 'mb': 2, 'gb': 3}
+        if unit not in exponents_map:
+            raise ValueError("Must select from \
+            ['bytes', 'kb', 'mb', 'gb']")
+        else:
+            size = file_size / 1024 ** exponents_map[unit]
+            return round(size, 3)
+    
     ### Preprocessing with feature selection and encryption combined
     def processInput(self):
         self.dropColumns()
@@ -243,6 +254,10 @@ class ClientGUI:
         # Get the serialized evaluation keys
         self.serialized_evaluation_keys = fhemodel_client.get_serialized_evaluation_keys()
 
+        # Check the size of the private key (in kB)
+        priv_key_size = self.get_size("./client-gui/keys", 'kb')
+        print("Private key size (kB): ", priv_key_size)
+
     def saveEncryption(self):
         filename = "encrypted_input.txt"
         with open(os.path.join(os.path.dirname(__file__), filename), "wb") as enc_file:
@@ -251,6 +266,10 @@ class ClientGUI:
         
         with open(os.path.join(os.path.dirname(__file__), r'serialized_evaluation_keys.ekl'), "wb") as f:
             f.write(self.serialized_evaluation_keys)
+        
+        # Check the size of the evaluation key (in kB)
+        eval_key_size = self.get_size("./client-gui/serialized_evaluation_keys.ekl", 'kb')
+        print("Evaluation key size (kB): ", eval_key_size)
 
     def sendEncryptRequestToServer(self, client):
         """Sends 'encrypted_input.txt' and 'serialized_evaluation_keys.ekl' (expected to be located in the same directory as the app) to the server-side app through the Python requests library. URL is currently set to localhost:8000 for development purposes."""
@@ -334,6 +353,19 @@ class ClientGUI:
             self.saveEncryption()
 
             self.writeOutput("Encrypted inputs and key files saved to 'encrypted_input.txt' and 'serialized_evaluation_keys.ekl'. Please do not move these files until after prediction.")
+
+            # Check MB size with sys of the encrypted data vs clear data
+            clear_input_path = os.path.join(os.path.dirname(__file__), "feature_selection_output.csv")
+            encrypted_input_path = os.path.join(os.path.dirname(__file__), "encrypted_input.txt")
+            clear_input_size = self.get_size(clear_input_path, 'kb')
+            encrypted_input_size = self.get_size(encrypted_input_path, 'kb')
+            print("Clear input size (kB): ", clear_input_size)
+            print("Encrypted input size (kB): ", encrypted_input_size)
+            print(
+                f"Encrypted data is "
+                f"{((encrypted_input_size - clear_input_size)/clear_input_size)*100:.4f}%"
+                " times larger than the clear data"
+            )
 
             app_url = "http://localhost:8000"
 
