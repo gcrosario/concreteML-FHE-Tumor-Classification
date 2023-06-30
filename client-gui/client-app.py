@@ -495,10 +495,11 @@ def download(url, dest_folder):
 
 if __name__ == "__main__":
 
-    download_files = input("Would you like to download the required client files? (Type Yes or No.) ")
+    # download_files = input("Would you like to download the required client files? (Type Yes or No.) ")
     # if(download_files.strip() in ["y", "yes", "YES", "Yes"]):
     #     getClientFiles()
     getClientFiles()
+    
     app = ClientGUI()
     app.run()
 
