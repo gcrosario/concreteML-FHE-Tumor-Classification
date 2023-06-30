@@ -16,7 +16,7 @@ from customtkinter import (
     set_appearance_mode,
     set_default_color_theme)
 
-import os, requests, stat, pathlib, shutil, subprocess, zipfile, traceback, urllib
+import os, requests, stat, pathlib, shutil, subprocess, zipfile, traceback, urllib, json
 import pandas, numpy
 
 from pandas import DataFrame, read_csv
@@ -207,6 +207,7 @@ class ClientGUI:
     
     ### Preprocessing with feature selection and encryption combined
     def processInput(self):
+        self.getFeaturesAndClasses()
         self.dropColumns()
         self.encryptInput()
         self.decryptPrediction()
@@ -219,22 +220,38 @@ class ClientGUI:
                                           )
         self.preprocessing_var.set(filename)
     
-    def dropColumns(self, feature_names = "./client-gui/kbest-top-features.txt"):
+    def getFeaturesAndClasses(self, file = os.path.join(os.path.dirname(__file__), "features_and_classes.txt")):
+        with open(file, "r") as fc_file:
+            dictionary = json.loads(fc_file.readline())
+            self.selected_features = dictionary["features"]
+            self.classes_labels = dictionary["classes"]
+            self.classes_labels = {int(key):value for key, value in self.classes_labels.items()}
+            # print(self.selected_features)
+            # print(self.classes_labels)
+
+    def dropColumns(self):
         filename = self.preprocessing_var.get()
 
         if(not filename.endswith(".csv")):
                 raise Exception("Invalid file type. Only .csv files are supported.")
 
         self.writeOutput("Beginning to process your data for feature selection...")
+
+        features = self.selected_features
+        feature_list = ["samples"] + features
+
+        drop_df = read_csv(filename)
+        drop_df = drop_df[[column for column in feature_list]]
+        drop_df.to_csv("./client-gui/feature_selection_output.csv", index=False, header=True)
         
-        with open(feature_names, "r") as feature_file:
-            temp_list = list(f for f in feature_file.read().splitlines())
+        # with open(feature_names, "r") as feature_file:
+        #     temp_list = list(f for f in feature_file.read().splitlines())
 
-            feature_list = ['samples'] + temp_list
+        #     feature_list = ['samples'] + temp_list
 
-            drop_df = read_csv(filename)
-            drop_df = drop_df[[column for column in feature_list]] 
-            drop_df.to_csv("./client-gui/feature_selection_output.csv", index=False, header=True)
+        #     drop_df = read_csv(filename)
+        #     drop_df = drop_df[[column for column in feature_list]] 
+        #     drop_df.to_csv("./client-gui/feature_selection_output.csv", index=False, header=True)
         
         self.writeOutput("Feature Selection DONE!")
         
@@ -392,7 +409,13 @@ class ClientGUI:
                 raise Exception("Invalid file type: Only .zip files are supported.")
 
             decrypted_predictions = []
-            classes_dict = {0: 'ependymoma', 1: 'glioblastoma', 2: 'medulloblastoma', 3: 'normal', 4: 'pilocytic_astrocytoma'}
+
+            #setting classes dictionary
+            try:
+                classes_dict = self.classes_labels
+            except:
+                classes_dict = {0: 'ependymoma', 1: 'glioblastoma', 2: 'medulloblastoma', 3: 'normal', 4: 'pilocytic_astrocytoma'}
+            
             pred_folder = os.path.join(os.path.dirname(__file__), "predictions")
 
             zip_name = filename
@@ -442,8 +465,8 @@ class ClientGUI:
 
 def getClientFiles():
     files = [
-        r"https://github.com/gcrosario/concreteML-FHE-Tumor-Classification/raw/master/FHE-Compiled-Model/LR-Kbest20-Trial3/client.zip",
-        r"https://raw.githubusercontent.com/gcrosario/concreteML-FHE-Tumor-Classification/master/FHE-Compiled-Model/kbest-top-features.txt",
+        r"https://github.com/gcrosario/concreteML-FHE-Tumor-Classification/raw/master/FHE-Compiled-Model/client.zip",
+        r"https://raw.githubusercontent.com/gcrosario/concreteML-FHE-Tumor-Classification/master/FHE-Compiled-Model/features_and_classes.txt",
         ]
     for file in files:
         print(file.split("/")[-1].replace("%20", " "))
@@ -473,9 +496,9 @@ def download(url, dest_folder):
 if __name__ == "__main__":
 
     download_files = input("Would you like to download the required client files? (Type Yes or No.) ")
-    if(download_files.strip() in ["y", "yes", "YES", "Yes"]):
-        getClientFiles()
-
+    # if(download_files.strip() in ["y", "yes", "YES", "Yes"]):
+    #     getClientFiles()
+    getClientFiles()
     app = ClientGUI()
     app.run()
 

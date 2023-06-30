@@ -23,7 +23,7 @@ def start_classification(request):
     clean_predictions_folder()
 
     count = 0
-    model_path =os.path.join(BASE_DIR, "FHE-Compiled-Model/LR-Kbest20-Trial3/") 
+    model_path =os.path.join(BASE_DIR, "FHE-Compiled-Model/") 
     keys_path = os.path.join(BASE_DIR, "tumorClassifier/keys")
     keys_file = request.FILES['keys_file']
     pred_dir = os.path.join(BASE_DIR, "tumorClassifier/predictions")
