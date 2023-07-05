@@ -246,7 +246,7 @@ class ClientGUI:
 
         drop_df = read_csv(filename)
         drop_df = drop_df[[column for column in feature_list]]
-        drop_df.to_csv("./client-gui/feature_selection_output.csv", index=False, header=True)
+        drop_df.to_csv(os.path.join(os.path.dirname(__file__), "feature_selection_output.csv"), index=False, header=True)
         
         self.writeOutput("Feature Selection DONE!")
 
@@ -328,7 +328,7 @@ class ClientGUI:
         self.serialized_evaluation_keys = fhemodel_client.get_serialized_evaluation_keys()
 
         # Check the size of the private key (in kB)
-        priv_key_size = self.get_size("./client-gui/keys", 'kb')
+        priv_key_size = self.get_size("./keys", 'kb')
         print("Private key size (kB): ", priv_key_size)
     
 
@@ -343,7 +343,7 @@ class ClientGUI:
             f.write(self.serialized_evaluation_keys)
         
         # Check the size of the evaluation key (in kB)
-        eval_key_size = self.get_size("./client-gui/serialized_evaluation_keys.ekl", 'kb')
+        eval_key_size = self.get_size("./serialized_evaluation_keys.ekl", 'kb')
         print("Evaluation key size (kB): ", eval_key_size)
 
 
