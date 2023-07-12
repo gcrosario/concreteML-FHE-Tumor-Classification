@@ -15,12 +15,15 @@ from customtkinter import (
     set_appearance_mode,
     set_default_color_theme)
 
-import os, requests, stat, pathlib, shutil, subprocess, zipfile, traceback, urllib, json
+import os, requests, stat, pathlib, shutil, subprocess, zipfile, traceback, urllib, json, hashlib
 import pandas, numpy
 from pandas import DataFrame, read_csv
 from numpy import save
 from datetime import datetime
 from concrete.ml.deployment import FHEModelClient
+
+### For downloading of client files
+os.environ["server_url"] = "localhost:8000"
 
 class ClientGUI:
     def __init__(self, master=None):
@@ -298,7 +301,7 @@ class ClientGUI:
             print("Encrypted input size (kB): ", encrypted_input_size)
 
             # Initialize requests object for client-server interaction
-            app_url = "http://localhost:8000"
+            app_url = f"http://{os.environ['server_url']}"
             client = requests.session()
             client.get(app_url)
 
@@ -350,7 +353,7 @@ class ClientGUI:
     ### Sends encrypted_input.txt and serialized_evaluation_keys.ekl (expected to be located in the same directory as the app) to the server-side app through the Python requests library. URL is set to localhost:8000 in development.
     def sendEncryptRequestToServer(self, client):
         
-        app_url = "http://localhost:8000"
+        app_url = f"http://{os.environ['server_url']}"
 
         if 'csrftoken' in client.cookies:
             # Django 1.6 and up
@@ -452,28 +455,53 @@ class ClientGUI:
         self.writeOutput("Your final prediction output has been saved! Check the predictions folder to view it.")
 
 
-### Download required client files from the project's GitHub Repository.
-### By default, targets the project's GitHub repository for downloading the files, but can be set to localhost:8000 to download from the local deployment server.
-def getClientFiles():
-    files = [
-        r"https://github.com/gcrosario/concreteML-FHE-Tumor-Classification/raw/master/FHE-Compiled-Model/client.zip",
-        r"https://raw.githubusercontent.com/gcrosario/concreteML-FHE-Tumor-Classification/master/FHE-Compiled-Model/features_and_classes.txt",
-        ]
-    for file in files:
-        print(file.split("/")[-1].replace("%20", " "))
-        if file.split("/")[-1].replace("%20", " ") not in os.listdir(os.path.dirname(__file__)):
-            download(file, os.path.dirname(__file__))
+def hash_file(filename):
+   """"This function returns the SHA-1 hash
+   of the file passed into it"""
 
-def download(url, dest_folder):
+   # make a hash object
+   h = hashlib.sha1()
+
+   # open file for reading in binary mode
+   with open(filename,'rb') as file:
+
+       # loop till the end of the file
+       chunk = 0
+       while chunk != b'':
+           # read only 1024 bytes at a time
+           chunk = file.read(1024)
+           h.update(chunk)
+
+   # return the hex representation of digest
+   return h.hexdigest()
+
+### Download required client files from the server.
+### By default, targets the 'server_url' environment variable, and accesses its download endpoint.
+def getClientFiles():
+    download_url_template = f"http://{os.environ['server_url']}/download?filename="
+
+    files = [
+        "client.zip",
+        "features_and_classes.txt",
+        ]
+    
+    for file in files:
+        print(f"Checking current directory for file: {file}")
+        if (file not in os.listdir(os.path.dirname(__file__))):
+            download(f"{download_url_template}{file}", os.path.dirname(__file__), file)
+        else:
+            download(f"{download_url_template}{file}", os.path.dirname(__file__), file, file_hash=hash_file(file))
+
+def download(url, dest_folder, dest_name, file_hash=None):
     if not os.path.exists(dest_folder):
         os.makedirs(dest_folder)
-
-    filename = url.split('/')[-1].replace(" ", "_")
-    file_path = os.path.join(dest_folder, filename)
+    
+    file_path = os.path.join(dest_folder, dest_name)
 
     r = requests.get(url, stream=True)
-
-    if r.ok:
+    received_hash = r.headers['hash']
+    print(f"received hash = {received_hash} and file_hash = {file_hash}")
+    if r.ok and received_hash != file_hash:
         print("saving to", os.path.abspath(file_path))
         with open(file_path, 'wb') as f:
             for chunk in r.iter_content(chunk_size=1024 * 8):
@@ -481,6 +509,8 @@ def download(url, dest_folder):
                     f.write(chunk)
                     f.flush()
                     os.fsync(f.fileno())
+    elif r.ok:
+        print(f"{dest_name} seems to already be the latest version.")
     else:  # HTTP status code 4XX/5XX
         print("Download failed: status code {}\n{}".format(r.status_code, r.text))
 
